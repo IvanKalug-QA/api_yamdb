@@ -2,6 +2,13 @@ from django.db import models
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
+ROOT = (
+    ('user', 'user'),
+    ('moderator', 'moderator'),
+    ('admin', 'admin')
+)
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, username):
         if not username:
@@ -9,7 +16,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('Users must have an email address')
         email = self.normalize_email(email)
-        user =self.model(
+        user = self.model(
             username=username, email=email
         )
         user.set_unusable_password()
@@ -32,8 +39,10 @@ class User(AbstractBaseUser):
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     bio = models.TextField(blank=True)
-    role = models.CharField(default='user', blank=True, max_length=25)
+    role = models.CharField(default='user',
+                            blank=True, max_length=25, choices=ROOT)
     password = None
+    last_login = None
 
     objects = UserManager()
 
