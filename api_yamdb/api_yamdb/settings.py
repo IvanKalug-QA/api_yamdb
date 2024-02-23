@@ -1,6 +1,15 @@
 from datetime import timedelta
 from pathlib import Path
 
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
+
+EMAIL = os.getenv('EMAIL')
+PASSWORD = os.getenv('PASSWORD')
+PORT = os.getenv('PORT')
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -110,10 +119,10 @@ AUTH_USER_MODEL = 'reviews.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.mail.ru'
-EMAIL_PORT = 587
+EMAIL_PORT = PORT
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'kaluginivan2002@mail.ru'
-EMAIL_HOST_PASSWORD = '2QQQi9GAchJ6uFu9GRCD'
+EMAIL_HOST_USER = EMAIL
+EMAIL_HOST_PASSWORD = PASSWORD
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -121,7 +130,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'PAGE_SIZE': 5,
 }
 
 SIMPLE_JWT = {
