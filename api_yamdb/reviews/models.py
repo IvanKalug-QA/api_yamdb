@@ -18,7 +18,7 @@ class UserManager(BaseUserManager):
             raise ValueError('Users must have an email address')
         email = self.normalize_email(email)
         user = self.model(
-            username=username, email=email, role=role, bio=bio
+            username=username, email=email, role=role
         )
         user.save(using=self._db)
         return user
@@ -29,15 +29,16 @@ class UserManager(BaseUserManager):
             email=self.normalize_email(email),
             username=username,
             password=password,
-            bio=bio
+            bio=bio,
         )
         user.role = 'admin'
+        user.is_superuser = 1
         user.save(using=self._db)
         return user
 
 
 class User(AbstractBaseUser):
-    email = models.EmailField(unique=True, max_length=254)
+    email = models.EmailField(max_length=254, unique=True)
     username = models.CharField(
         unique=True,
         max_length=150,
@@ -49,11 +50,12 @@ class User(AbstractBaseUser):
             )
         ]
     )
-    first_name = models.CharField(max_length=150, blank=True, null=True)
-    last_name = models.CharField(max_length=150, blank=True, null=True)
-    bio = models.TextField(blank=True, null=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    bio = models.TextField(blank=True)
     role = models.CharField(default='user',
                             blank=True, max_length=25, choices=ROOT)
+    is_superuser = models.IntegerField(max_length=1, default=0, blank=True)
     password = None
     last_login = None
 

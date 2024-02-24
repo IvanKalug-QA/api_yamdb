@@ -124,6 +124,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = EMAIL
 EMAIL_HOST_PASSWORD = PASSWORD
 
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

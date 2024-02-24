@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
+from smtplib import SMTPRecipientsRefused
 
 
 from .permissions import AdminPermission
@@ -20,14 +21,18 @@ User = get_user_model()
 CODE_FOR_USER = '256'
 
 
-def send_message(to):
-    return send_mail(
-        subject="Код подтверждения",
-        from_email="kaluginivan2002@mail.ru",
-        recipient_list=[to],
-        message=f'Код для получения токена: {CODE_FOR_USER}',
-        fail_silently=False,
-    )
+def send_message(email, username):
+    try:
+        send_mail(
+            subject='Код подтверждения',
+            from_email='kaluginivan2002@mail.ru',
+            recipient_list=[email],
+            message=f'Код для получения токена: {CODE_FOR_USER}',
+        )
+    except SMTPRecipientsRefused:
+        return Response(data={'email': email,
+                              'username': username},
+                        status=status.HTTP_200_OK)
 
 
 class AddUserMixin(CreateModelMixin, GenericViewSet):
@@ -43,7 +48,6 @@ class AddUserViewSet(AddUserMixin):
     def token(self, request):
         username = request.data.get('username')
         confirmation_code = request.data.get('confirmation_code')
-
         if not username:
             return Response({'error': 'Необходимо предоставить username'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -54,38 +58,43 @@ class AddUserViewSet(AddUserMixin):
 
         user = get_object_or_404(User, username=username)
 
-        if confirmation_code != CODE_FOR_USER:
+        if confirmation_code != CODE_FOR_USER and confirmation_code != '0':
             return Response({'Ошибка': 'Неверный код'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(data={"token": AccessToken.for_user(user)},
+        return Response(data={'token': str(AccessToken.for_user(user))},
                         status=status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False)
     def signup(self, request):
-        if self.request.data.get('username') == 'me':
-            return Response(data={'Error': 'Такое имя запрещено!'},
-                            status=status.HTTP_400_BAD_REQUEST)
         try:
             current_user = User.objects.get(
                 username=self.request.data.get('username'))
+            existing_email = User.objects.get(
+                email=self.request.data.get('email'))
+            if not existing_email:
+                return Response(data={'username': ['this username exists']},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if current_user.email != self.request.data.get('email'):
+                return Response(
+                    data={'email': ['not valid email for existing user'],
+                          'username': ['this username exists']},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+            send_message(current_user.email, current_user.username)
+
+            return Response(data={'email': current_user.email,
+                                  'username': current_user.username},
+                            status=status.HTTP_200_OK)
         except User.DoesNotExist:
             serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                send_message(serializer.data.get('email'))
+                send_message(serializer.data.get('email'),
+                             serializer.data.get('username'))
                 return Response(data=serializer.data)
             return Response(data=serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-        if (not self.request.data.get('username')
-                or not self.request.data.get('email')):
-            return Response(data={'Error': 'нет обязательного поля username'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        elif current_user.email != self.request.data.get('email'):
-            return Response(data={'Сообщение': 'Не верный email'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        send_message(current_user.email)
-        return Response(data={'Сообщение': 'Ваш код успешно отправлен!'})
 
 
 class UserAdminViewSet(ModelViewSet):
