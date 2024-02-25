@@ -1,4 +1,5 @@
 from rest_framework import serializers
+<<<<<<< HEAD
 
 from reviews.models import Category, Genre, Title
 
@@ -39,3 +40,47 @@ class TitleGetSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'description',
                   'genre', 'category')
+=======
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class AddUserserializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ("email", "username")
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Такое имя запрещено!')
+        return value
+
+
+class UsersSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            "username", "email", "first_name", "last_name", "bio", "role")
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Такое имя запрещено!')
+        return value
+
+
+class EditUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            "username", "email", "first_name", "last_name", "bio", "role")
+        read_only_fields = ("role",)
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Такое имя запрещено!')
+        return value
+>>>>>>> 4436f67de89ed336177881d97ea006424f4cd000
