@@ -1,5 +1,3 @@
-import os
-
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -12,8 +10,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from smtplib import SMTPRecipientsRefused
-from dotenv import load_dotenv
 
+from api_yamdb.settings import EMAIL
 from .permissions import AdminPermission
 from .serializers import AddUserserializer, UsersSerializer, EditUserSerializer
 
@@ -21,9 +19,6 @@ User = get_user_model()
 
 CODE_FOR_USER = '256'
 
-load_dotenv()
-
-EMAIL = os.getenv('EMAIL')
 
 
 def send_message(email, username):

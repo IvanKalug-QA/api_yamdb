@@ -1,13 +1,9 @@
 from datetime import timedelta
 from pathlib import Path
-import os
 
-from dotenv import load_dotenv
-load_dotenv()
-
-EMAIL = os.getenv('EMAIL')
-PASSWORD = os.getenv('PASSWORD')
-PORT = os.getenv('PORT')
+EMAIL = 'kaluginivan2002@mail.ru'
+PASSWORD = '2QQQi9GAchJ6uFu9GRCD'
+PORT = 587
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
