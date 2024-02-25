@@ -8,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
-from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from smtplib import SMTPRecipientsRefused
 
@@ -35,11 +34,7 @@ def send_message(email, username):
                         status=status.HTTP_200_OK)
 
 
-class AddUserMixin(CreateModelMixin, GenericViewSet):
-    pass
-
-
-class AddUserViewSet(AddUserMixin):
+class AddUserViewSet(GenericViewSet):
     queryset = User.objects.all()
     serializer_class = AddUserserializer
     permission_classes = [AllowAny]
@@ -69,13 +64,13 @@ class AddUserViewSet(AddUserMixin):
     def signup(self, request):
         try:
             current_user = User.objects.get(
-                username=self.request.data.get('username'))
+                username=request.data.get('username'))
             existing_email = User.objects.get(
-                email=self.request.data.get('email'))
+                email=request.data.get('email'))
             if not existing_email:
                 return Response(data={'username': ['this username exists']},
                                 status=status.HTTP_400_BAD_REQUEST)
-            if current_user.email != self.request.data.get('email'):
+            if current_user.email != request.data.get('email'):
                 return Response(
                     data={'email': ['not valid email for existing user'],
                           'username': ['this username exists']},
@@ -111,7 +106,7 @@ class UserAdminViewSet(ModelViewSet):
             permission_classes=[IsAuthenticated, ])
     def me(self, request):
         user = User.objects.get(username=request.user.username)
-        if self.request.method == 'GET':
+        if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data)
         serializer = EditUserSerializer(user,
