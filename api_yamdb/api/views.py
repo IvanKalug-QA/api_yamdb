@@ -1,3 +1,5 @@
+import os
+
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -10,7 +12,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from smtplib import SMTPRecipientsRefused
-
+from dotenv import load_dotenv
 
 from .permissions import AdminPermission
 from .serializers import AddUserserializer, UsersSerializer, EditUserSerializer
@@ -19,12 +21,16 @@ User = get_user_model()
 
 CODE_FOR_USER = '256'
 
+load_dotenv()
+
+EMAIL = os.getenv('EMAIL')
+
 
 def send_message(email, username):
     try:
         send_mail(
             subject='Код подтверждения',
-            from_email='kaluginivan2002@mail.ru',
+            from_email=EMAIL,
             recipient_list=[email],
             message=f'Код для получения токена: {CODE_FOR_USER}',
         )
