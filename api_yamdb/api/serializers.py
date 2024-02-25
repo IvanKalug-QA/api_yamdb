@@ -1,47 +1,8 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
-<<<<<<< HEAD
 
 from reviews.models import Category, Genre, Title
 
-
-class CategorySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Category
-        fields = ('name', 'slug')
-
-
-class GenreSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Genre
-        fields = ('name', 'slug')
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        many=True, slug_field='slug', queryset=Genre.objects.all()
-    )
-    category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all()
-    )
-
-    class Meta:
-        model = Title
-        fields = ('id', 'name', 'year', 'description',
-                  'genre', 'category')
-
-
-class TitleGetSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True, read_only=True)
-    category = CategorySerializer(read_only=True)
-
-    class Meta:
-        model = Title
-        fields = ('id', 'name', 'year', 'description',
-                  'genre', 'category')
-=======
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -83,4 +44,41 @@ class EditUserSerializer(serializers.ModelSerializer):
         if value == 'me':
             raise serializers.ValidationError('Такое имя запрещено!')
         return value
->>>>>>> 4436f67de89ed336177881d97ea006424f4cd000
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        many=True, slug_field='slug', queryset=Genre.objects.all()
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year', 'description',
+                  'genre', 'category')
+
+
+class TitleGetSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year', 'description',
+                  'genre', 'category')

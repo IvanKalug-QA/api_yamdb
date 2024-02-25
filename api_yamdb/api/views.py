@@ -1,59 +1,31 @@
-<<<<<<< HEAD
-from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
-
-from api.filters import TitleFilter
-from api.mixins import CategoryGenreMixin
-from api.permissions import IsAdminOrReadOnly
-from api.serializers import (CategorySerializer, GenreSerializer,
-                             TitleSerializer, TitleGetSerializer)
-from reviews.models import Category, Genre, Title
-
-
-class CategoryViewSet(CategoryGenreMixin):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-
-class GenreViewSet(CategoryGenreMixin):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filterset_class = TitleFilter
-    http_method_names = ['get', 'post', 'patch', 'delete']
-    pagination_class = PageNumberPagination
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TitleGetSerializer
-        return TitleSerializer
-=======
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from smtplib import SMTPRecipientsRefused
 
 from api_yamdb.settings import EMAIL
-from .permissions import AdminPermission
-from .serializers import AddUserserializer, UsersSerializer, EditUserSerializer
+from .permissions import AdminPermission, IsAdminOrReadOnly
+from .serializers import (AddUserserializer, UsersSerializer,
+                          EditUserSerializer, CategorySerializer,
+                          GenreSerializer, TitleSerializer,
+                          TitleGetSerializer)
+from .filters import TitleFilter
+from .mixins import CategoryGenreMixin
+from reviews.models import Category, Genre, Title
+
 
 User = get_user_model()
 
 CODE_FOR_USER = '256'
-
 
 
 def send_message(email, username):
@@ -153,4 +125,27 @@ class UserAdminViewSet(ModelViewSet):
         else:
             return Response(data=serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 4436f67de89ed336177881d97ea006424f4cd000
+
+
+class CategoryViewSet(CategoryGenreMixin):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(CategoryGenreMixin):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    filterset_class = TitleFilter
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    pagination_class = PageNumberPagination
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TitleGetSerializer
+        return TitleSerializer
