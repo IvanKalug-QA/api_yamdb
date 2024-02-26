@@ -1,5 +1,4 @@
 from rest_framework import filters, mixins, viewsets
-from rest_framework.pagination import PageNumberPagination
 
 from .permissions import IsAdminOrReadOnly
 
@@ -10,4 +9,3 @@ class CategoryGenreMixin(mixins.ListModelMixin, mixins.CreateModelMixin,
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = (IsAdminOrReadOnly,)
-    pagination_class = PageNumberPagination

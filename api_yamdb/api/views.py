@@ -1,4 +1,5 @@
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -141,9 +142,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
-    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
