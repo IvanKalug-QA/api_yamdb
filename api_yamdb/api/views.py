@@ -1,28 +1,29 @@
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from django_filters.rest_framework import DjangoFilterBackend
+from smtplib import SMTPRecipientsRefused
+
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
-from rest_framework import status, viewsets
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from smtplib import SMTPRecipientsRefused
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Category, Genre, Review, Title
 
 from api_yamdb.settings import EMAIL
-from .permissions import AdminPermission, IsAdminOrReadOnly
-from .serializers import (AddUserserializer, UsersSerializer,
-                          EditUserSerializer, CategorySerializer,
-                          GenreSerializer, TitleSerializer,
-                          TitleGetSerializer)
+
 from .filters import TitleFilter
 from .mixins import CategoryGenreMixin
-from reviews.models import Category, Genre, Title
-
+from .permissions import AdminPermission, IsAdminOrReadOnly, IsStaffOrReadOnly
+from .serializers import (AddUserserializer, CategorySerializer,
+                          CommentSerializer, EditUserSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleGetSerializer, TitleSerializer, UsersSerializer)
 
 User = get_user_model()
 
@@ -145,8 +146,49 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
+    rating = serializers.SerializerMethodField()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return TitleGetSerializer
         return TitleSerializer
+
+
+class ReviewViewSet(ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsStaffOrReadOnly,
+                          )
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_queryset(self):
+        return self.get_title().reviews.all()
+
+    def get_title(self):
+        title_id = self.kwargs.get("title_id")
+        return get_object_or_404(Title, id=title_id)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, title=self.get_title())
+
+
+class CommentViewSet(ModelViewSet):
+
+    serializer_class = CommentSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsStaffOrReadOnly,
+                          )
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_review(self):
+        return get_object_or_404(
+            Review,
+            pk=self.kwargs.get("review_id"),
+        )
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user,
+                        review=self.get_review())

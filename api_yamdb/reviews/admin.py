@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Genre, GenreTitle, Title
+from .models import Category, Comment, Genre, GenreTitle, Review, Title
 
 
 class GenreTitleInline(admin.TabularInline):
@@ -29,3 +29,35 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('title',
+                    'author',
+                    'score',
+                    'pub_date',)
+    list_filter = ('title',
+                   'author',
+                   'pub_date',)
+    search_fields = ('title__name',
+                     'author__username',)
+    list_editable = ('score',)
+
+
+@admin.register(Comment)
+class CommentClass(admin.ModelAdmin):
+    """Admin of comments."""
+
+    list_display = ('id', 'text',
+                    'review',
+                    'author',
+                    'pub_date',)
+    list_filter = ('review',
+                   'author',
+                   'pub_date',)
+    list_editable = ('text',)
+    search_fields = ('review',
+                     'author',
+                     'pub_date',)
+    empty_value_display = 'None value'
