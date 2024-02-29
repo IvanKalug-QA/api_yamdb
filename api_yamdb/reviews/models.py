@@ -53,7 +53,7 @@ class User(AbstractBaseUser):
     bio = models.TextField(blank=True)
     role = models.CharField(default='user',
                             blank=True, max_length=25, choices=ROOT)
-    is_superuser = models.IntegerField(max_length=1, default=0, blank=True)
+    is_superuser = models.IntegerField(default=0, blank=True)
     password = None
     last_login = None
 
