@@ -69,6 +69,7 @@ class Category(models.Model):
     slug = models.SlugField('Слаг', max_length=50, unique=True)
 
     class Meta:
+        ordering = ('slug',)
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
@@ -81,6 +82,7 @@ class Genre(models.Model):
     slug = models.SlugField('Слаг', max_length=50, unique=True)
 
     class Meta:
+        ordering = ('slug',)
         verbose_name = 'жанр'
         verbose_name_plural = 'Жанры'
 
@@ -97,6 +99,7 @@ class Title(models.Model):
                                  null=True, verbose_name='Категория')
 
     class Meta:
+        ordering = ('-year',)
         default_related_name = 'titles'
         verbose_name = 'произведение'
         verbose_name_plural = 'Произведения'
