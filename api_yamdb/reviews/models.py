@@ -127,14 +127,14 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-User = get_user_model()
+
 
 
 class ReviewAndCommentModel(models.Model):
     text = models.TextField()
     pub_date = models.DateTimeField("Дата публикации",
                                     auto_now_add=True,)
-    author = models.ForeignKey(User,
+    author = models.ForeignKey(get_user_model(),
                                on_delete=models.CASCADE,
                                verbose_name='Автор',)
 
