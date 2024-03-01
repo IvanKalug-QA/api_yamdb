@@ -93,13 +93,11 @@ class AddUserViewSet(GenericViewSet):
                             status=status.HTTP_200_OK)
         except User.DoesNotExist:
             serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                send_message(serializer.data.get('email'),
-                             serializer.data.get('username'))
-                return Response(data=serializer.data)
-            return Response(data=serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            send_message(serializer.data.get('email'),
+                         serializer.data.get('username'))
+            return Response(data=serializer.data)
 
 
 class UserAdminViewSet(ModelViewSet):
@@ -121,12 +119,9 @@ class UserAdminViewSet(ModelViewSet):
             return Response(serializer.data)
         serializer = EditUserSerializer(user,
                                         data=self.request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(data=serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CategoryViewSet(CategoryGenreMixin):
