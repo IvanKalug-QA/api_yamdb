@@ -162,7 +162,8 @@ class ReviewViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
-        return self.get_title().reviews.all()
+        queryset = Review.objects.select_related('author').all()
+        return queryset.filter(title=self.get_title())
 
     def get_title(self):
         title_id = self.kwargs.get("title_id")
@@ -180,15 +181,16 @@ class CommentViewSet(ModelViewSet):
                           )
     http_method_names = ['get', 'post', 'patch', 'delete']
 
+    def get_queryset(self):
+        return self.get_review().comments.select_related('review__author').all()
+
     def get_review(self):
         return get_object_or_404(
-            Review,
+            Review.objects.select_related('title'),
+            title_id=self.kwargs.get("title_id"),
             pk=self.kwargs.get("review_id"),
         )
 
-    def get_queryset(self):
-        return self.get_review().comments.all()
-
     def perform_create(self, serializer):
         serializer.save(author=self.request.user,
-                        review=self.get_review())
+                        review_id=self.get_review().id)
