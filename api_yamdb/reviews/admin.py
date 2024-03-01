@@ -49,15 +49,8 @@ class ReviewAdmin(admin.ModelAdmin):
 class CommentClass(admin.ModelAdmin):
     """Admin of comments."""
 
-    list_display = ('id', 'text',
-                    'review',
-                    'author',
-                    'pub_date',)
-    list_filter = ('review',
-                   'author',
-                   'pub_date',)
+    list_display = ('pub_date','text', 'review', 'author', )
+    list_filter = ('review', 'author', 'pub_date',)
     list_editable = ('text',)
-    search_fields = ('review',
-                     'author',
-                     'pub_date',)
+    search_fields = ('review', 'author', 'pub_date',)
     empty_value_display = 'None value'
