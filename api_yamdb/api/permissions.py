@@ -36,6 +36,7 @@ class IsStaffOrReadOnly(BasePermission):
                 request.method in SAFE_METHODS
                 or request.user.role == 'admin'
                 or request.user.role == 'moderator'
+                or request.user.is_superuser
                 or obj.author == request.user
             )
         return request.method in SAFE_METHODS
