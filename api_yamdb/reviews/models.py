@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
 from django.db import models
@@ -13,25 +13,30 @@ ROOT = (
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, username, password=None, role='user',
-                    bio=None):
-        email = self.normalize_email(email)
-        user = self.model(
-            username=username, email=email, role=role
+    def create_user(self, email, username, first_name='', last_name='',
+                    password=None, role='user',
+                    bio=''):
+        user = User.objects.create(
+            username=username, email=email,
+            first_name=first_name, last_name=last_name, role=role,
+            bio=bio
         )
-        user.save(using=self._db)
+        user.save()
         return user
 
-    def create_superuser(self, email, username, password=None, role='admin',
+    def create_superuser(self, email, username, first_name='', last_name='',
+                         password=None, role='admin',
                          bio=None):
-        email = self.normalize_email(email)
-        user = self.model(
+        user = self.create_user(
             email=email,
             username=username,
             role=role,
-            is_superuser=1
+            first_name=first_name,
+            last_name=last_name,
+            password=password
         )
-        user.save(using=self._db)
+        user.is_superuser = True
+        user.save()
         return user
 
 
@@ -53,9 +58,9 @@ class User(AbstractBaseUser):
     bio = models.TextField(blank=True)
     role = models.CharField(default='user',
                             blank=True, max_length=25, choices=ROOT)
-    is_superuser = models.IntegerField(default=0, blank=True)
-    password = None
+    is_superuser = models.BooleanField(default=False, blank=True)
     last_login = None
+    password = None
 
     objects = UserManager()
 
@@ -125,9 +130,6 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f'{self.genre} {self.title}'
-
-
-
 
 
 class ReviewAndCommentModel(models.Model):

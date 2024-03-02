@@ -1,13 +1,13 @@
 from smtplib import SMTPRecipientsRefused
 
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import serializers, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
@@ -21,22 +21,20 @@ from .filters import TitleFilter
 from .mixins import CategoryGenreMixin
 from .permissions import AdminPermission, IsAdminOrReadOnly, IsStaffOrReadOnly
 from .serializers import (AddUserserializer, CategorySerializer,
-                          CommentSerializer, EditUserSerializer,
-                          GenreSerializer, ReviewSerializer,
-                          TitleGetSerializer, TitleSerializer, UsersSerializer)
+                          CommentSerializer, GenreSerializer, ReviewSerializer,
+                          TitleGetSerializer, TitleSerializer, UsersSerializer,
+                          AuthUserSerializer)
 
 User = get_user_model()
 
-CODE_FOR_USER = '256'
 
-
-def send_message(email, username):
+def send_message(email, username, code):
     try:
         send_mail(
             subject='Код подтверждения',
             from_email=EMAIL,
             recipient_list=[email],
-            message=f'Код для получения токена: {CODE_FOR_USER}',
+            message=f'Код для получения токена: {code}',
         )
     except SMTPRecipientsRefused:
         return Response(data={'email': email,
@@ -46,24 +44,23 @@ def send_message(email, username):
 
 class AddUserViewSet(GenericViewSet):
     queryset = User.objects.all()
-    serializer_class = AddUserserializer
+    serializer_class = AuthUserSerializer
     permission_classes = [AllowAny]
 
     @action(methods=['POST'], detail=False)
     def token(self, request):
-        username = request.data.get('username')
-        confirmation_code = request.data.get('confirmation_code')
-        if not username:
-            return Response({'error': 'Необходимо предоставить username'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        elif not confirmation_code:
-            return Response(
-                {'error': 'Необходимо предоставить confirmation_code'},
-                status=status.HTTP_400_BAD_REQUEST)
+        serializers = self.get_serializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
 
-        user = get_object_or_404(User, username=username)
+        try:
+            user = User.objects.get(username=request.data.get('username'))
+        except User.DoesNotExist:
+            return Response(data={'username': 'Not Found'},
+                            status=status.HTTP_404_NOT_FOUND)
 
-        if confirmation_code != CODE_FOR_USER and confirmation_code != '0':
+        if (not default_token_generator.check_token(user, request.data.get(
+                'confirmation_code')) and request.data.get(
+                    'confirmation_code') != '0'):
             return Response({'Ошибка': 'Неверный код'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -73,31 +70,19 @@ class AddUserViewSet(GenericViewSet):
     @action(methods=['POST'], detail=False)
     def signup(self, request):
         try:
-            current_user = User.objects.get(
-                username=request.data.get('username'))
-            existing_email = User.objects.get(
+            user = User.objects.get(
+                username=request.data.get('username'),
                 email=request.data.get('email'))
-            if not existing_email:
-                return Response(data={'username': ['this username exists']},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if current_user.email != request.data.get('email'):
-                return Response(
-                    data={'email': ['not valid email for existing user'],
-                          'username': ['this username exists']},
-                    status=status.HTTP_400_BAD_REQUEST)
-
-            send_message(current_user.email, current_user.username)
-
-            return Response(data={'email': current_user.email,
-                                  'username': current_user.username},
-                            status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            serializer = self.get_serializer(data=request.data)
+            serializer = AddUserserializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            send_message(serializer.data.get('email'),
-                         serializer.data.get('username'))
-            return Response(data=serializer.data)
+            user = serializer.save()
+        token = default_token_generator.make_token(user)
+        send_message(request.data.get('email'),
+                     request.data.get('username'), token)
+        return Response(
+            data={'email': request.data.get('email'),
+                  'username': request.data.get('username')})
 
 
 class UserAdminViewSet(ModelViewSet):
@@ -107,7 +92,6 @@ class UserAdminViewSet(ModelViewSet):
     filter_backends = [SearchFilter,]
     search_fields = ['username']
     lookup_field = 'username'
-    pagination_class = PageNumberPagination
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(methods=['GET', 'PATCH'], detail=False,
@@ -117,11 +101,16 @@ class UserAdminViewSet(ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data)
-        serializer = EditUserSerializer(user,
-                                        data=self.request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        elif request.method == 'PATCH':
+            data = request.data.copy()
+            if data.get('role'):
+                data.pop('role')
+            serializer = self.get_serializer(user,
+                                             data=data,
+                                             partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class CategoryViewSet(CategoryGenreMixin):
@@ -141,7 +130,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
-    rating = serializers.SerializerMethodField()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -177,7 +165,8 @@ class CommentViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
-        return self.get_review().comments.select_related('review__author').all()
+        return self.get_review().comments.select_related(
+            'review__author').all()
 
     def get_review(self):
         return get_object_or_404(
