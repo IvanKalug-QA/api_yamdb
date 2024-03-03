@@ -33,17 +33,13 @@ class UsersSerializer(serializers.ModelSerializer):
         return value
 
 
-class EditUserSerializer(serializers.ModelSerializer):
+class AuthUserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.SlugField(required=True)
+
     class Meta:
         model = User
-        fields = (
-            "username", "email", "first_name", "last_name", "bio", "role")
-        read_only_fields = ("role",)
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError('Такое имя запрещено!')
-        return value
+        fields = ("username", "confirmation_code")
 
 
 # class GenreTitleException(Exception):

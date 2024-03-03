@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from reviews.validators import validate_year
 
@@ -12,30 +12,7 @@ ROOT = (
 )
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, username, password=None, role='user',
-                    bio=None):
-        email = self.normalize_email(email)
-        user = self.model(
-            username=username, email=email, role=role
-        )
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, username, password=None, role='admin',
-                         bio=None):
-        email = self.normalize_email(email)
-        user = self.model(
-            email=email,
-            username=username,
-            role=role,
-            is_superuser=1
-        )
-        user.save(using=self._db)
-        return user
-
-
-class User(AbstractBaseUser):
+class User(AbstractUser):
     email = models.EmailField(max_length=254, unique=True)
     username = models.CharField(
         unique=True,
@@ -53,15 +30,18 @@ class User(AbstractBaseUser):
     bio = models.TextField(blank=True)
     role = models.CharField(default='user',
                             blank=True, max_length=25, choices=ROOT)
-    is_superuser = models.IntegerField(default=0, blank=True)
-    password = None
-    last_login = None
-
-    objects = UserManager()
 
     REQUIRED_FIELDS = ['email']
 
     USERNAME_FIELD = 'username'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin' or self.is_staff
 
 
 class Category(models.Model):
