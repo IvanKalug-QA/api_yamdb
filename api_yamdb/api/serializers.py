@@ -100,6 +100,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
         return data
 
+
 class TitleGetSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
