@@ -66,7 +66,18 @@ class User(AbstractBaseUser):
 
 class Category(models.Model):
     name = models.CharField('Название', max_length=256)
-    slug = models.SlugField('Слаг', max_length=50, unique=True)
+    slug = models.SlugField(
+        'Слаг',
+        max_length=50,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^[-a-zA-Z0-9_]+$',
+                message='Enter a valid slug',
+                code='invalid_slug'
+            )
+        ]
+    )
 
     class Meta:
         ordering = ('slug',)
@@ -79,7 +90,18 @@ class Category(models.Model):
 
 class Genre(models.Model):
     name = models.CharField('Название', max_length=256)
-    slug = models.SlugField('Слаг', max_length=50, unique=True)
+    slug = models.SlugField(
+        'Слаг',
+        max_length=50,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^[-a-zA-Z0-9_]+$',
+                message='Enter a valid slug',
+                code='invalid_slug'
+            )
+        ]
+    )
 
     class Meta:
         ordering = ('slug',)
@@ -125,9 +147,6 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f'{self.genre} {self.title}'
-
-
-
 
 
 class ReviewAndCommentModel(models.Model):

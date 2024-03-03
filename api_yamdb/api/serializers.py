@@ -46,6 +46,10 @@ class EditUserSerializer(serializers.ModelSerializer):
         return value
 
 
+# class GenreTitleException(Exception):
+#     pass
+
+
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -60,29 +64,70 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class CategoryForTitleField(serializers.SlugRelatedField):
+
+    def to_representation(self, obj):
+        result = {'name': obj.name, 'slug': obj.slug}
+        return result
+
+    def to_internal_value(self, data):
+        category_obj = Category.objects.get(slug=data)
+        return category_obj
+
+
+class GenreForTitleField(serializers.SlugRelatedField):
+
+    def to_representation(self, obj):
+        result = {'name': obj.name, 'slug': obj.slug}
+        return result
+
+    def to_internal_value(self, data):
+        genre_obj = Genre.objects.get(slug=data)
+        return genre_obj
+
+
 class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
+    genre = GenreForTitleField(
         many=True, slug_field='slug', queryset=Genre.objects.all()
     )
-    category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all()
+    category = CategoryForTitleField(
+        slug_field='slug', queryset=Genre.objects.all()
     )
+    rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description',
+        fields = ('id', 'name', 'year', 'rating', 'description',
                   'genre', 'category')
+
+    def get_rating(self, obj):
+        return obj.reviews.aggregate(Avg("score")).get("score__avg")
+
+    def validate(self, data):
+        if data.get('genre') == []:
+            raise serializers.ValidationError('Empty_genre')
+        return data
+
+    def create(self, validated_data):
+
+        return super().create(validated_data)
+
+    # def valigate_category(self, value):
+    #     category_obj = Category.objects.get(slug=value).exists()
+    #     if not category_obj:
+    #         raise serializers.ValidationError('Invalid_category')
+    #     return value
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Title
-        fields = "__all__"
-        read_only_fields = ("rating",)
+        fields = ('id', 'name', 'year', 'rating', 'description',
+                  'genre', 'category')
 
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg("score")).get("score__avg")
