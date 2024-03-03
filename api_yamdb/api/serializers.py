@@ -3,6 +3,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+
 from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
@@ -15,8 +16,8 @@ class AddUserserializer(serializers.ModelSerializer):
         fields = ("email", "username")
 
     def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError('Такое имя запрещено!')
+        if value == "me":
+            raise serializers.ValidationError("Такое имя запрещено!")
         return value
 
 
@@ -28,8 +29,8 @@ class UsersSerializer(serializers.ModelSerializer):
             "username", "email", "first_name", "last_name", "bio", "role")
 
     def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError('Такое имя запрещено!')
+        if value == "me":
+            raise serializers.ValidationError("Такое имя запрещено!")
         return value
 
 
@@ -46,20 +47,20 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug')
+        fields = ("name", "slug")
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        fields = ("name", "slug")
 
 
 class CategoryForTitleField(serializers.SlugRelatedField):
 
     def to_representation(self, obj):
-        result = {'name': obj.name, 'slug': obj.slug}
+        result = {"name": obj.name, "slug": obj.slug}
         return result
 
     def to_internal_value(self, data):
@@ -70,7 +71,7 @@ class CategoryForTitleField(serializers.SlugRelatedField):
 class GenreForTitleField(serializers.SlugRelatedField):
 
     def to_representation(self, obj):
-        result = {'name': obj.name, 'slug': obj.slug}
+        result = {"name": obj.name, "slug": obj.slug}
         return result
 
     def to_internal_value(self, data):
@@ -80,29 +81,25 @@ class GenreForTitleField(serializers.SlugRelatedField):
 
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreForTitleField(
-        many=True, slug_field='slug', queryset=Genre.objects.all()
+        many=True, slug_field="slug", queryset=Genre.objects.all(),
     )
     category = CategoryForTitleField(
-        slug_field='slug', queryset=Genre.objects.all()
+        slug_field="slug", queryset=Genre.objects.all()
     )
     rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genre', 'category')
+        fields = ("id", "name", "year", "rating", "description",
+                  "genre", "category")
 
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg("score")).get("score__avg")
 
     def validate(self, data):
-        if data.get('genre') == []:
-            raise serializers.ValidationError('Empty_genre')
+        if data.get("genre") == []:
+            raise serializers.ValidationError("Empty_genre")
         return data
-
-    def create(self, validated_data):
-
-        return super().create(validated_data)
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
@@ -112,8 +109,8 @@ class TitleGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genre', 'category')
+        fields = ("id", "name", "year", "rating", "description",
+                  "genre", "category")
 
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg("score")).get("score__avg")

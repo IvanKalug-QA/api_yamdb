@@ -16,7 +16,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Review, Title
 
 from api_yamdb.settings import EMAIL
-
 from .filters import TitleFilter
 from .mixins import CategoryGenreMixin
 from .permissions import AdminPermission, IsAdminOrReadOnly, IsStaffOrReadOnly
@@ -149,7 +148,7 @@ class ReviewViewSet(ModelViewSet):
         return queryset.filter(title=self.get_title())
 
     def get_title(self):
-        title_id = self.kwargs.get("title_id")
+        title_id = self.kwargs.get('title_id')
         return get_object_or_404(Title, id=title_id)
 
     def perform_create(self, serializer):
@@ -171,8 +170,8 @@ class CommentViewSet(ModelViewSet):
     def get_review(self):
         return get_object_or_404(
             Review.objects.select_related('title'),
-            title_id=self.kwargs.get("title_id"),
-            pk=self.kwargs.get("review_id"),
+            title_id=self.kwargs.get('title_id'),
+            pk=self.kwargs.get('review_id'),
         )
 
     def perform_create(self, serializer):
