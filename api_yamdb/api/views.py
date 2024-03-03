@@ -44,7 +44,7 @@ def send_message(email, username, code):
 class AddUserViewSet(GenericViewSet):
     queryset = User.objects.all()
     serializer_class = AuthUserSerializer
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
 
     @action(methods=['POST'], detail=False)
     def token(self, request):
@@ -87,8 +87,8 @@ class AddUserViewSet(GenericViewSet):
 class UserAdminViewSet(ModelViewSet):
     queryset = User.objects.all().order_by('id')
     serializer_class = UsersSerializer
-    permission_classes = [AdminPermission,]
-    filter_backends = [SearchFilter,]
+    permission_classes = (AdminPermission,)
+    filter_backends = (SearchFilter,)
     search_fields = ['username']
     lookup_field = 'username'
     http_method_names = ['get', 'post', 'patch', 'delete']
