@@ -131,7 +131,7 @@ class GenreTitle(models.Model):
 
 class ReviewAndCommentModel(models.Model):
     text = models.TextField()
-    pub_date = models.DateTimeField("Дата публикации",
+    pub_date = models.DateTimeField('Дата публикации',
                                     auto_now_add=True,)
     author = models.ForeignKey(get_user_model(),
                                on_delete=models.CASCADE,
@@ -139,25 +139,25 @@ class ReviewAndCommentModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ("-pub_date",)
+        ordering = ('-pub_date',)
 
 
 class Review(ReviewAndCommentModel):
     title = models.ForeignKey(Title,
                               on_delete=models.CASCADE,
-                              verbose_name="Произведение",)
+                              verbose_name='Произведение',)
     score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1),
                     MaxValueValidator(10)],
-        verbose_name="Оценка",
+        verbose_name='Оценка',
     )
-    to_str = "{text}; {pub_date}; {author}; {title}; {score}"
+    to_str = '{text}; {pub_date}; {author}; {title}; {score}'
 
     class Meta(ReviewAndCommentModel.Meta):
-        default_related_name = "reviews"
+        default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
-                fields=["author", "title"], name="author_title_connection"
+                fields=['author', 'title'], name='author_title_connection'
             )
         ]
 
@@ -175,13 +175,13 @@ class Review(ReviewAndCommentModel):
 class Comment(ReviewAndCommentModel):
     review = models.ForeignKey(Review,
                                on_delete=models.CASCADE,
-                               verbose_name="тзыв")
+                               verbose_name='отзыв')
 
-    to_str = "{text}; {pub_date}; {author}; {review};"
+    to_str = '{text}; {pub_date}; {author}; {review};'
 
     class Meta(ReviewAndCommentModel.Meta):
-        default_related_name = "comments"
-        verbose_name = "Комментарий"
+        default_related_name = 'comments'
+        verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
