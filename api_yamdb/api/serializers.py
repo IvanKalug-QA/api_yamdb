@@ -42,10 +42,6 @@ class AuthUserSerializer(serializers.ModelSerializer):
         fields = ("username", "confirmation_code")
 
 
-# class GenreTitleException(Exception):
-#     pass
-
-
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -107,12 +103,6 @@ class TitleSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         return super().create(validated_data)
-
-    # def valigate_category(self, value):
-    #     category_obj = Category.objects.get(slug=value).exists()
-    #     if not category_obj:
-    #         raise serializers.ValidationError('Invalid_category')
-    #     return value
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
