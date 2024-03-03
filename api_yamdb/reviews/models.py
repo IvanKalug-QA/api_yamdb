@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from reviews.validators import validate_year
 
@@ -12,35 +12,7 @@ ROOT = (
 )
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, username, first_name='', last_name='',
-                    password=None, role='user',
-                    bio=''):
-        user = User.objects.create(
-            username=username, email=email,
-            first_name=first_name, last_name=last_name, role=role,
-            bio=bio
-        )
-        user.save()
-        return user
-
-    def create_superuser(self, email, username, first_name='', last_name='',
-                         password=None, role='admin',
-                         bio=None):
-        user = self.create_user(
-            email=email,
-            username=username,
-            role=role,
-            first_name=first_name,
-            last_name=last_name,
-            password=password
-        )
-        user.is_superuser = True
-        user.save()
-        return user
-
-
-class User(AbstractBaseUser):
+class User(AbstractUser):
     email = models.EmailField(max_length=254, unique=True)
     username = models.CharField(
         unique=True,
@@ -58,15 +30,18 @@ class User(AbstractBaseUser):
     bio = models.TextField(blank=True)
     role = models.CharField(default='user',
                             blank=True, max_length=25, choices=ROOT)
-    is_superuser = models.BooleanField(default=False, blank=True)
-    last_login = None
-    password = None
-
-    objects = UserManager()
 
     REQUIRED_FIELDS = ['email']
 
     USERNAME_FIELD = 'username'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin' or self.is_staff
 
 
 class Category(models.Model):
