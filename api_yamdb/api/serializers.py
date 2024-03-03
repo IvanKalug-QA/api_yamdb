@@ -57,34 +57,12 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ("name", "slug")
 
 
-class CategoryForTitleField(serializers.SlugRelatedField):
-
-    def to_representation(self, obj):
-        result = {"name": obj.name, "slug": obj.slug}
-        return result
-
-    def to_internal_value(self, data):
-        category_obj = Category.objects.get(slug=data)
-        return category_obj
-
-
-class GenreForTitleField(serializers.SlugRelatedField):
-
-    def to_representation(self, obj):
-        result = {"name": obj.name, "slug": obj.slug}
-        return result
-
-    def to_internal_value(self, data):
-        genre_obj = Genre.objects.get(slug=data)
-        return genre_obj
-
-
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreForTitleField(
+    genre = serializers.SlugRelatedField(
         many=True, slug_field="slug", queryset=Genre.objects.all(),
     )
-    category = CategoryForTitleField(
-        slug_field="slug", queryset=Genre.objects.all()
+    category = serializers.SlugRelatedField(
+        slug_field="slug", queryset=Category.objects.all()
     )
     rating = serializers.SerializerMethodField(read_only=True)
 
@@ -96,9 +74,30 @@ class TitleSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         return obj.reviews.aggregate(Avg("score")).get("score__avg")
 
-    def validate(self, data):
-        if data.get("genre") == []:
+    def validate_genre(self, value):
+        if not value:
             raise serializers.ValidationError("Empty_genre")
+        return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        genre_objs = []
+        for genre_slug in data['genre']:
+            genre = Genre.objects.get(slug=genre_slug)
+            genre_objs.append({
+                'name': genre.name,
+                'slug': genre.slug
+            })
+        data['genre'] = genre_objs
+
+        category_slug = data['category']
+        category = Category.objects.get(slug=category_slug)
+        data['category'] = {
+            'name': category.name,
+            'slug': category.slug
+        }
+
         return data
 
 
