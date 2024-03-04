@@ -1,5 +1,7 @@
 import csv
+import os.path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from reviews.models import (Category, Genre, GenreTitle, Title,
@@ -8,7 +10,7 @@ from reviews.models import (Category, Genre, GenreTitle, Title,
 
 class Command(BaseCommand):
     help = 'Imports data from a CSV-files into the database'
-    Model_file_relation = {
+    MODEL_FILE_RELATION = {
         Category: 'category.csv',
         Genre: 'genre.csv',
         Title: 'titles.csv',
@@ -17,7 +19,7 @@ class Command(BaseCommand):
         Review: 'review.csv',
         Comment: 'comments.csv',
     }
-    Foreignkey_fields = ['category', 'author', 'title', 'review']
+    FOREIGN_KEY_FIELDS = ['category', 'author', 'title', 'review']
 
     def correct_obj_dict(self, row):
         """
@@ -27,7 +29,7 @@ class Command(BaseCommand):
         """
         obj_dict = {}
         for key, value in row.items():
-            if key in self.Foreignkey_fields:
+            if key in self.FOREIGN_KEY_FIELDS:
                 obj_dict[f'{key}' + '_id'] = value
             else:
                 obj_dict[key] = value
@@ -40,8 +42,11 @@ class Command(BaseCommand):
         при совпадении id с существующими записями, заменяет в них
         данные на данные из CSV-файлов.
         """
-        for model, file in self.Model_file_relation.items():
-            with open('static/data/' + f'{file}', encoding='utf-8') as csvfile:
+        for model, file in self.MODEL_FILE_RELATION.items():
+            with open(
+                os.path.join(settings.CSV_FILES_DIR, f'{file}'),
+                encoding='utf-8'
+            ) as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     data = self.correct_obj_dict(row)
