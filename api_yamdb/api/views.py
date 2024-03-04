@@ -1,8 +1,5 @@
-from smtplib import SMTPRecipientsRefused
-
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -15,51 +12,35 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title
-from api_yamdb.settings import EMAIL
 from .filters import TitleFilter
 from .mixins import CategoryGenreMixin
 from .permissions import AdminPermission, IsAdminOrReadOnly, IsStaffOrReadOnly
-from .serializers import (AddUserserializer, CategorySerializer,
+from .serializers import (AddUserSerializer, CategorySerializer,
                           CommentSerializer, GenreSerializer, ReviewSerializer,
-                          TitleGetSerializer, TitleSerializer, UsersSerializer,
+                          TitleGetSerializer, TitleSerializer, UserSerializer,
                           AuthUserSerializer)
+from .utils import send_message
 
 User = get_user_model()
-
-
-def send_message(email, username, code):
-    try:
-        send_mail(
-            subject='Код подтверждения',
-            from_email=EMAIL,
-            recipient_list=[email],
-            message=f'Код для получения токена: {code}',
-        )
-    except SMTPRecipientsRefused:
-        return Response(data={'email': email,
-                              'username': username},
-                        status=status.HTTP_200_OK)
 
 
 class AddUserViewSet(GenericViewSet):
     queryset = User.objects.all()
     serializer_class = AuthUserSerializer
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
 
     @action(methods=['POST'], detail=False)
     def token(self, request):
         serializers = self.get_serializer(data=request.data)
         serializers.is_valid(raise_exception=True)
 
-        try:
-            user = User.objects.get(username=request.data.get('username'))
-        except User.DoesNotExist:
-            return Response(data={'username': 'Not Found'},
-                            status=status.HTTP_404_NOT_FOUND)
+        comfirmation_code = serializers.data.get('confirmation_code')
 
-        if (not default_token_generator.check_token(user, request.data.get(
-                'confirmation_code')) and request.data.get(
-                    'confirmation_code') != '0'):
+        user = get_object_or_404(User, username=serializers.data.get(
+            'username'))
+
+        if (not default_token_generator.check_token(
+                user, comfirmation_code) and comfirmation_code != '0'):
             return Response({'Ошибка': 'Неверный код'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -68,28 +49,29 @@ class AddUserViewSet(GenericViewSet):
 
     @action(methods=['POST'], detail=False)
     def signup(self, request):
+        username = request.data.get('username')
+        email = request.data.get('email')
         try:
             user = User.objects.get(
-                username=request.data.get('username'),
-                email=request.data.get('email'))
+                username=username,
+                email=email)
         except User.DoesNotExist:
-            serializer = AddUserserializer(data=request.data)
+            serializer = AddUserSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
         token = default_token_generator.make_token(user)
-        send_message(request.data.get('email'),
-                     request.data.get('username'), token)
+        send_message(email, token)
         return Response(
-            data={'email': request.data.get('email'),
-                  'username': request.data.get('username')})
+            data={'email': email,
+                  'username': username})
 
 
 class UserAdminViewSet(ModelViewSet):
     queryset = User.objects.all().order_by('id')
-    serializer_class = UsersSerializer
-    permission_classes = [AdminPermission,]
-    filter_backends = [SearchFilter,]
-    search_fields = ['username']
+    serializer_class = UserSerializer
+    permission_classes = (AdminPermission,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
     lookup_field = 'username'
     http_method_names = ['get', 'post', 'patch', 'delete']
 

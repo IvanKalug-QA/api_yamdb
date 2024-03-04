@@ -7,10 +7,15 @@ from django.db import models
 from reviews.validators import validate_year
 from api_yamdb.settings import MIN_SCORE, MAX_SCORE
 
-ROOT = (
-    ('user', 'user'),
-    ('moderator', 'moderator'),
-    ('admin', 'admin')
+
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
+
+USERS_ROOT = (
+    (USER, USER),
+    (MODERATOR, MODERATOR),
+    (ADMIN, ADMIN)
 )
 
 
@@ -31,7 +36,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150, blank=True)
     bio = models.TextField(blank=True)
     role = models.CharField(default='user',
-                            blank=True, max_length=25, choices=ROOT)
+                            blank=True, max_length=25, choices=USERS_ROOT)
 
     REQUIRED_FIELDS = ['email']
 
@@ -39,11 +44,11 @@ class User(AbstractUser):
 
     @property
     def is_moderator(self):
-        return self.role == 'moderator'
+        return self.role == MODERATOR
 
     @property
     def is_admin(self):
-        return self.role == 'admin' or self.is_staff
+        return self.role == ADMIN or self.is_staff
 
 
 class Category(models.Model):

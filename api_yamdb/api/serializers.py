@@ -6,33 +6,24 @@ from rest_framework.relations import SlugRelatedField
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from api_yamdb.settings import MIN_SCORE, MAX_SCORE
+from .mixins import ValidateUsernameMixin
 
 User = get_user_model()
 
 
-class AddUserserializer(serializers.ModelSerializer):
+class AddUserSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ("email", "username")
 
-    def validate_username(self, value):
-        if value == "me":
-            raise serializers.ValidationError("Такое имя запрещено!")
-        return value
 
-
-class UsersSerializer(serializers.ModelSerializer):
+class UserSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = (
             "username", "email", "first_name", "last_name", "bio", "role")
-
-    def validate_username(self, value):
-        if value == "me":
-            raise serializers.ValidationError("Такое имя запрещено!")
-        return value
 
 
 class AuthUserSerializer(serializers.ModelSerializer):
