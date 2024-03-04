@@ -63,15 +63,14 @@ class TitleSerializer(serializers.ModelSerializer):
     category = SlugToDictField(
         slug_field="slug", queryset=Category.objects.all()
     )
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.FloatField(
+        source='reviews__score__avg', read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Title
         fields = ("id", "name", "year", "rating", "description",
                   "genre", "category")
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg("score")).get("score__avg")
 
     def validate_genre(self, value):
         if not value:
@@ -82,15 +81,14 @@ class TitleSerializer(serializers.ModelSerializer):
 class TitleGetSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.FloatField(
+        source='reviews__score__avg', read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Title
         fields = ("id", "name", "year", "rating", "description",
                   "genre", "category")
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg("score")).get("score__avg")
 
 
 class ReviewSerializer(serializers.ModelSerializer):
