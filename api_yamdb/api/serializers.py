@@ -57,11 +57,18 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ("name", "slug")
 
 
+class SlugToDictField(serializers.SlugRelatedField):
+
+    def to_representation(self, obj):
+        result = {"name": obj.name, "slug": obj.slug}
+        return result
+
+
 class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
+    genre = SlugToDictField(
         many=True, slug_field="slug", queryset=Genre.objects.all(),
     )
-    category = serializers.SlugRelatedField(
+    category = SlugToDictField(
         slug_field="slug", queryset=Category.objects.all()
     )
     rating = serializers.SerializerMethodField(read_only=True)
@@ -78,27 +85,6 @@ class TitleSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Empty_genre")
         return value
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        genre_objs = []
-        for genre_slug in data['genre']:
-            genre = Genre.objects.get(slug=genre_slug)
-            genre_objs.append({
-                'name': genre.name,
-                'slug': genre.slug
-            })
-        data['genre'] = genre_objs
-
-        category_slug = data['category']
-        category = Category.objects.get(slug=category_slug)
-        data['category'] = {
-            'name': category.name,
-            'slug': category.slug
-        }
-
-        return data
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
