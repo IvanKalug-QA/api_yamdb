@@ -172,11 +172,11 @@ class Review(BaseReviewAndComment):
 
         def __str__(self):
             to_str = '{text}; {pub_date}; {author}; {title}; {score}'
-            return self.to_str.format(text=self.text,
-                                      pub_date=self.pub_date,
-                                      author=self.author.username,
-                                      title=self.title,
-                                      score=self.score,)
+            return to_str.format(text=self.text,
+                                 pub_date=self.pub_date,
+                                 author=self.author.username,
+                                 title=self.title,
+                                 score=self.score,)
 
 
 class Comment(BaseReviewAndComment):
@@ -184,7 +184,6 @@ class Comment(BaseReviewAndComment):
                                on_delete=models.CASCADE,
                                verbose_name='отзыв')
 
-    
     class Meta(BaseReviewAndComment.Meta):
         default_related_name = 'comments'
         verbose_name = 'Комментарий'
@@ -192,7 +191,7 @@ class Comment(BaseReviewAndComment):
 
     def __str__(self):
         to_str = '{text}; {pub_date}; {author}; {review};'
-        return self.to_str.format(text=self.text,
-                                  pub_date=self.pub_date,
-                                  author=self.author.username,
-                                  review=self.review,)
+        return to_str.format(text=self.text,
+                             pub_date=self.pub_date,
+                             author=self.author.username,
+                             review=self.review,)
