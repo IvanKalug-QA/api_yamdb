@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from reviews.validators import validate_year
+from api_yamdb.settings import MIN_SCORE, MAX_SCORE
 
 ROOT = (
     ('user', 'user'),
@@ -130,7 +131,7 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class ReviewAndCommentModel(models.Model):
+class BaseReviewAndComment(models.Model):
     text = models.TextField()
     pub_date = models.DateTimeField('Дата публикации',
                                     auto_now_add=True,)
@@ -143,18 +144,17 @@ class ReviewAndCommentModel(models.Model):
         ordering = ('-pub_date',)
 
 
-class Review(ReviewAndCommentModel):
+class Review(BaseReviewAndComment):
     title = models.ForeignKey(Title,
                               on_delete=models.CASCADE,
                               verbose_name='Произведение',)
     score = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(10)],
+        validators=[MinValueValidator(MIN_SCORE),
+                    MaxValueValidator(MAX_SCORE)],
         verbose_name='Оценка',
     )
-    to_str = '{text}; {pub_date}; {author}; {title}; {score}'
 
-    class Meta(ReviewAndCommentModel.Meta):
+    class Meta(BaseReviewAndComment.Meta):
         default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
@@ -166,6 +166,7 @@ class Review(ReviewAndCommentModel):
         verbose_name_plural = 'Отзывы'
 
         def __str__(self):
+            to_str = '{text}; {pub_date}; {author}; {title}; {score}'
             return self.to_str.format(text=self.text,
                                       pub_date=self.pub_date,
                                       author=self.author.username,
@@ -173,19 +174,19 @@ class Review(ReviewAndCommentModel):
                                       score=self.score,)
 
 
-class Comment(ReviewAndCommentModel):
+class Comment(BaseReviewAndComment):
     review = models.ForeignKey(Review,
                                on_delete=models.CASCADE,
                                verbose_name='отзыв')
 
-    to_str = '{text}; {pub_date}; {author}; {review};'
-
-    class Meta(ReviewAndCommentModel.Meta):
+    
+    class Meta(BaseReviewAndComment.Meta):
         default_related_name = 'comments'
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
+        to_str = '{text}; {pub_date}; {author}; {review};'
         return self.to_str.format(text=self.text,
                                   pub_date=self.pub_date,
                                   author=self.author.username,

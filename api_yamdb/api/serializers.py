@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
 from reviews.models import Category, Comment, Genre, Review, Title
+from api_yamdb.settings import MIN_SCORE, MAX_SCORE
 
 User = get_user_model()
 
@@ -118,8 +119,8 @@ class TitleGetSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
 
     author = SlugRelatedField(slug_field="username", read_only=True)
-    score = serializers.IntegerField(min_value=1,
-                                     max_value=10)
+    score = serializers.IntegerField(min_value=MIN_SCORE,
+                                     max_value=MAX_SCORE)
 
     def get_title(self):
         title_id = self.context.get("view").kwargs.get("title_id")

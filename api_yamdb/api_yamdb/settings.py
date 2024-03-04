@@ -129,3 +129,6 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+MIN_SCORE = 1
+MAX_SCORE = 10
