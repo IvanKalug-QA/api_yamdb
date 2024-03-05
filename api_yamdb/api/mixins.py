@@ -14,6 +14,6 @@ class CategoryGenreMixin(mixins.ListModelMixin, mixins.CreateModelMixin,
 
 class ValidateUsernameMixin:
     def validate_username(self, value):
-        if value == "me":
-            raise ValidationError("Такое имя запрещено!")
+        if value == 'me':
+            raise ValidationError('Такое имя запрещено!')
         return value
